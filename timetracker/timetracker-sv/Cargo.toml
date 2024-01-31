@@ -14,3 +14,6 @@ panic = "abort"
 
 [lints.rust]
 unsafe_code = "forbid"
+
+[dependencies]
+windows-service = { git = "https://github.com/mullvad/windows-service-rs.git" }
