@@ -79,13 +79,13 @@ mod ping_service {
                 // control manager. Always return NoError even if not implemented.
                 ServiceControl::Interrogate => ServiceControlHandlerResult::NoError,
 
-                // Handle stop
+                // Handle stop.
                 ServiceControl::Stop => {
                     shutdown_tx.send(()).unwrap();
                     ServiceControlHandlerResult::NoError
                 }
 
-                // treat the UserEvent as a stop request
+                // Treat the UserEvent as a stop request.
                 ServiceControl::UserEvent(code) => {
                     if code.to_raw() == 130 {
                         shutdown_tx.send(()).unwrap();
@@ -101,7 +101,7 @@ mod ping_service {
         // The returned status handle should be used to report service status changes to the system.
         let status_handle = service_control_handler::register(SERVICE_NAME, event_handler)?;
 
-        // Tell the system that service is running
+        // Tell the system that service is running.
         status_handle.set_service_status(ServiceStatus {
             service_type: SERVICE_TYPE,
             current_state: ServiceState::Running,
@@ -124,10 +124,10 @@ mod ping_service {
 
             // Poll shutdown event.
             match shutdown_rx.recv_timeout(Duration::from_secs(1)) {
-                // Break the loop either upon stop or channel disconnect
+                // Break the loop either upon stop or channel disconnect.
                 Ok(_) | Err(mpsc::RecvTimeoutError::Disconnected) => break,
 
-                // Continue work if no events were received within the timeout
+                // Continue work if no events were received within the timeout.
                 Err(mpsc::RecvTimeoutError::Timeout) => (),
             };
         }
