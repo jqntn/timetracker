@@ -1,3 +1,4 @@
+#![allow(unused_must_use)]
 #![windows_subsystem = "windows"]
 
 extern crate native_windows_derive as nwd;
@@ -8,45 +9,51 @@ use nwg::NativeUi;
 use winapi::um::winuser::SetProcessDPIAware;
 
 #[derive(Default, NwgUi)]
-pub struct BasicApp {
-    #[nwg_control(size: (300, 135), position: (300, 300), title: "Basic example", flags: "WINDOW|VISIBLE")]
-    #[nwg_events( OnWindowClose: [BasicApp::say_goodbye] )]
-    window: nwg::Window,
+pub struct SystemTray {
+    #[nwg_control]
+    window: nwg::MessageWindow,
 
-    #[nwg_control(text: "Heisenberg", size: (280, 35), position: (10, 10), focus: true)]
-    name_edit: nwg::TextInput,
+    #[nwg_resource(source_file: Some("res/icon/hourglass-96.ico"))]
+    icon: nwg::Icon,
 
-    #[nwg_control(text: "Say my name", size: (280, 70), position: (10, 50))]
-    #[nwg_events( OnButtonClick: [BasicApp::say_hello] )]
-    hello_button: nwg::Button,
+    #[nwg_control(icon: Some(&data.icon), tip: Some("timetracker"))]
+    #[nwg_events(MousePressLeftUp: [SystemTray::show_menu], OnContextMenu: [SystemTray::show_menu])]
+    tray: nwg::TrayNotification,
+
+    #[nwg_control(parent: window, popup: true)]
+    tray_menu: nwg::Menu,
+
+    #[nwg_control(parent: tray_menu, text: "Open")]
+    #[nwg_events(OnMenuItemSelected: [SystemTray::show_window])]
+    tray_item_open: nwg::MenuItem,
+
+    #[nwg_control(parent: tray_menu, text: "Exit")]
+    #[nwg_events(OnMenuItemSelected: [SystemTray::exit])]
+    tray_item_exit: nwg::MenuItem,
 }
 
-impl BasicApp {
-    fn say_hello(&self) {
-        nwg::modal_info_message(
-            &self.window,
-            "Hello",
-            &format!("Hello {}", self.name_edit.text()),
-        );
+impl SystemTray {
+    fn show_menu(&self) {
+        let (x, y): (i32, i32) = nwg::GlobalCursor::position();
+        self.tray_menu.popup(x, y);
     }
 
-    fn say_goodbye(&self) {
-        nwg::modal_info_message(
-            &self.window,
-            "Goodbye",
-            &format!("Goodbye {}", self.name_edit.text()),
-        );
+    fn show_window(&self) {
+        let _: nwg::MessageChoice = nwg::simple_message("Hello", "Hello, World!");
+    }
+
+    fn exit(&self) {
         nwg::stop_thread_dispatch();
     }
 }
 
 fn main() {
-    unsafe { SetProcessDPIAware() };
+    let _: i32 = unsafe { SetProcessDPIAware() };
 
     nwg::init().expect("Failed to init Native Windows GUI");
 
-    let _font = nwg::Font::set_global_family("Segoe UI").expect("Failed to set default font");
-    let _app = BasicApp::build_ui(Default::default()).expect("Failed to build UI");
+    let _ui: system_tray_ui::SystemTrayUi =
+        SystemTray::build_ui(Default::default()).expect("Failed to build UI");
 
     nwg::dispatch_thread_events();
 }
