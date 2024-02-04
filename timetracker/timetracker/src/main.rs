@@ -3,16 +3,15 @@
 extern crate native_windows_derive as nwd;
 extern crate native_windows_gui as nwg;
 
+mod constants;
+mod shared;
+
+use crate::constants::*;
+use crate::shared::*;
 use nwd::NwgUi;
 use nwg::NativeUi;
 use single_instance::SingleInstance;
-use std::sync::Mutex;
-use winapi::{shared::windef::HWND, um::winuser::SetForegroundWindow};
-
-const APP_NAME: &str = "timetracker";
-const WINDOW_SIZE: (i32, i32) = (800, 450);
-
-static mut WINDOW_HANDLE: Mutex<Option<HWND>> = Mutex::new(None);
+use winapi::um::winuser::SetForegroundWindow;
 
 #[derive(Default, NwgUi)]
 pub struct SystemTray {
@@ -103,24 +102,14 @@ impl BasicApp {
     }
 }
 
-struct App {}
-
-impl App {
-    fn new() -> Self {
-        nwg::init().expect("Failed to init Native Windows GUI");
-
-        let _system_tray: system_tray_ui::SystemTrayUi =
-            SystemTray::build_ui(Default::default()).expect("Failed to build UI");
-
-        nwg::dispatch_thread_events();
-
-        Self {}
-    }
-}
-
 fn main() {
     let instance: SingleInstance = SingleInstance::new(APP_NAME).unwrap();
     assert!(instance.is_single());
 
-    let _app: App = App::new();
+    nwg::init().expect("Failed to init Native Windows GUI");
+
+    let _system_tray: system_tray_ui::SystemTrayUi =
+        SystemTray::build_ui(Default::default()).expect("Failed to build UI");
+
+    nwg::dispatch_thread_events();
 }
