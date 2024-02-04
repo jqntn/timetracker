@@ -1,3 +1,4 @@
 [build]
+# Disabling target because WiX automation scans the default build directory instead of the target-specific one.
 # target = "x86_64-pc-windows-msvc"
 rustflags = ["-Ctarget-feature=+crt-static"]

@@ -1,0 +1,6 @@
+#define RT_MANIFEST 24
+1 RT_MANIFEST "timetracker.exe.manifest"
+
+MAINICON ICON "res/icon/timetracker-96.ico"
+
+APPICON ICON "res/icon/timetracker-96.ico"

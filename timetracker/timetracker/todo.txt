@@ -1,4 +1,3 @@
-- icons everywhere
 - run at startup
 - installer should create shortcuts
 - check for update

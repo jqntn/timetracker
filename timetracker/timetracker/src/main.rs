@@ -1,4 +1,3 @@
-#![allow(unused_must_use)]
 #![windows_subsystem = "windows"]
 
 extern crate native_windows_derive as nwd;
@@ -6,17 +5,18 @@ extern crate native_windows_gui as nwg;
 
 use nwd::NwgUi;
 use nwg::NativeUi;
-use winapi::{
-    shared::windef::HWND,
-    um::winuser::{SetForegroundWindow, SetProcessDPIAware},
-};
+use single_instance::SingleInstance;
+use winapi::{shared::windef::HWND, um::winuser::SetForegroundWindow};
 
 #[derive(Default, NwgUi)]
 pub struct SystemTray {
     #[nwg_control]
     window: nwg::MessageWindow,
 
-    #[nwg_resource(source_file: Some("res/icon/timetracker-96.ico"))]
+    #[nwg_resource]
+    embed: nwg::EmbedResource,
+
+    #[nwg_resource(source_embed: Some(&data.embed), source_embed_str: Some("APPICON"))]
     icon: nwg::Icon,
 
     #[nwg_control(icon: Some(&data.icon), tip: Some("timetracker"))]
@@ -78,7 +78,10 @@ pub struct BasicApp {
     #[nwg_events( OnWindowClose: [BasicApp::exit] )]
     window: nwg::Window,
 
-    #[nwg_resource(source_file: Some("res/icon/timetracker-96.ico"))]
+    #[nwg_resource]
+    embed: nwg::EmbedResource,
+
+    #[nwg_resource(source_embed: Some(&data.embed), source_embed_str: Some("APPICON"))]
     icon: nwg::Icon,
 }
 
@@ -94,7 +97,8 @@ const WINDOW_SIZE: (i32, i32) = (800, 450);
 static mut WINDOW_HANDLE: Option<HWND> = None;
 
 fn main() {
-    let _: i32 = unsafe { SetProcessDPIAware() };
+    let instance: SingleInstance = SingleInstance::new("timetracker").unwrap();
+    assert!(instance.is_single());
 
     nwg::init().expect("Failed to init Native Windows GUI");
 
