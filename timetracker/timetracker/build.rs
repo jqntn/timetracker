@@ -1,5 +1,8 @@
-extern crate embed_resource;
+extern crate winres;
 
 fn main() {
-    embed_resource::compile("manifest.rc", embed_resource::NONE);
+    let mut res = winres::WindowsResource::new();
+    res.set_icon_with_id("res/icon/timetracker-96.ico", "APPICON");
+    res.set_manifest_file("exe.manifest");
+    res.compile().unwrap();
 }
