@@ -108,6 +108,12 @@
                     </Component>
                     -->
 
+                    <Component Id='RegKey' Guid='*'>
+                        <RegistryValue KeyPath='yes' Root='HKCU' Key='SOFTWARE\timetracker' Name='FirstTimeUse' Value='1' Type='integer'/>
+                        <RemoveRegistryKey Action='removeOnInstall' Root='HKCU' Key='SOFTWARE\timetracker'/>
+                        <RemoveRegistryKey Action='removeOnUninstall' Root='HKCU' Key='SOFTWARE\timetracker'/>
+                    </Component>
+
                     <Directory Id='Bin' Name='bin'>
                         <Component Id='Path' Guid='82420274-3F93-481C-B7AB-B183FA454F9E' KeyPath='yes'>
                             <Environment
@@ -147,6 +153,8 @@
               sidecar file to the installer.
             -->
             <!--<ComponentRef Id='License'/>-->
+
+            <ComponentRef Id='RegKey'/>
 
             <ComponentRef Id='binary0'/>
 

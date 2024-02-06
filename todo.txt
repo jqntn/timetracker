@@ -1,3 +1,2 @@
 MVP:
 - installer should create shortcuts
-- uninstaller should delete reg key

@@ -148,11 +148,25 @@ impl SystemTray {
     }
 
     fn first_time_init(&self) {
-        let Ok((key, disp)) = self.get_reg_key() else {
+        let Ok((key, _)) = self.get_reg_key() else {
             return;
         };
 
-        if disp != winreg::enums::RegDisposition::REG_CREATED_NEW_KEY {
+        if key.get_value::<u32, &str>("FirstTimeUse").is_err()
+            && key.set_value("FirstTimeUse", &(true as u32)).is_err()
+        {
+            return;
+        }
+
+        let Ok(first_time_use) = key.get_value::<u32, &str>("FirstTimeUse") else {
+            return;
+        };
+
+        if first_time_use == (false as u32) {
+            return;
+        }
+
+        if key.set_value("FirstTimeUse", &(false as u32)).is_err() {
             return;
         }
 
