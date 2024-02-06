@@ -119,7 +119,7 @@ impl SystemTray {
 
     fn enable_startup_first_time(&self) {
         if let Ok((_, disp)) = winreg::RegKey::predef(HKEY_CURRENT_USER)
-            .create_subkey(std::path::Path::new(APP_NAME).join("FirstTime"))
+            .create_subkey(std::path::Path::new("SOFTWARE").join(APP_NAME))
         {
             if disp == REG_CREATED_NEW_KEY {
                 if let Ok(auto_launch) = self.get_auto_launch() {
