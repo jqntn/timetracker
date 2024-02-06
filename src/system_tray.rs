@@ -2,8 +2,6 @@ use crate::basic_app::*;
 use crate::constants::*;
 use crate::shared::*;
 use nwg::NativeUi;
-use winapi::um::winuser::SetForegroundWindow;
-use winreg::enums::*;
 
 #[derive(Default, nwd::NwgUi)]
 pub struct SystemTray {
@@ -34,6 +32,10 @@ pub struct SystemTray {
     #[nwg_events(OnMenuItemSelected: [SystemTray::toggle_startup])]
     tray_item_startup: nwg::MenuItem,
 
+    #[nwg_control(parent: tray_menu, text: "Auto update")]
+    #[nwg_events(OnMenuItemSelected: [SystemTray::toggle_update])]
+    tray_item_update: nwg::MenuItem,
+
     #[nwg_control(parent: tray_menu)]
     separator1: nwg::MenuSeparator,
 
@@ -47,7 +49,8 @@ impl SystemTray {
         let system_tray: system_tray_ui::SystemTrayUi =
             SystemTray::build_ui(SystemTray::default()).expect("Failed to build UI");
 
-        system_tray.enable_startup_first_time();
+        system_tray.first_time_init();
+        system_tray.auto_update();
 
         nwg::dispatch_thread_events();
 
@@ -56,6 +59,7 @@ impl SystemTray {
 
     fn show_menu(&self) {
         self.refresh_startup();
+        self.refresh_update();
 
         let (x, y): (i32, i32) = nwg::GlobalCursor::position();
         self.tray_menu.popup(x, y);
@@ -87,6 +91,15 @@ impl SystemTray {
         }
     }
 
+    fn toggle_update(&self) {
+        let Ok((key, _)) = self.get_reg_key() else {
+            return;
+        };
+
+        let _: Result<(), std::io::Error> =
+            key.set_value("AutoUpdate", &(!self.tray_item_update.checked() as u32));
+    }
+
     fn refresh_startup(&self) {
         let Ok(auto_launch) = self.get_auto_launch() else {
             return;
@@ -94,6 +107,16 @@ impl SystemTray {
 
         if let Ok(is_enabled) = auto_launch.is_enabled() {
             self.tray_item_startup.set_checked(is_enabled);
+        }
+    }
+
+    fn refresh_update(&self) {
+        let Ok((key, _)) = self.get_reg_key() else {
+            return;
+        };
+
+        if let Ok(auto_update) = key.get_value::<u32, &str>("AutoUpdate") {
+            self.tray_item_update.set_checked(auto_update > 0);
         }
     }
 
@@ -109,24 +132,64 @@ impl SystemTray {
             .unwrap())
     }
 
+    fn get_reg_key(
+        &self,
+    ) -> Result<(winreg::RegKey, winreg::enums::RegDisposition), std::io::Error> {
+        winreg::RegKey::predef(winreg::enums::HKEY_CURRENT_USER)
+            .create_subkey(std::path::Path::new("SOFTWARE").join(APP_NAME))
+    }
+
     fn set_foreground_window(&self) -> bool {
         if let Some(hwnd) = unsafe { *WINDOW_HANDLE.lock().unwrap() } {
-            unsafe { SetForegroundWindow(hwnd) };
+            unsafe { winapi::um::winuser::SetForegroundWindow(hwnd) };
             return true;
         }
         false
     }
 
-    fn enable_startup_first_time(&self) {
-        if let Ok((_, disp)) = winreg::RegKey::predef(HKEY_CURRENT_USER)
-            .create_subkey(std::path::Path::new("SOFTWARE").join(APP_NAME))
-        {
-            if disp == REG_CREATED_NEW_KEY {
-                if let Ok(auto_launch) = self.get_auto_launch() {
-                    let _: Result<(), al::Error> = auto_launch.enable();
-                }
-            }
+    fn first_time_init(&self) {
+        let Ok((key, disp)) = self.get_reg_key() else {
+            return;
+        };
+
+        if disp != winreg::enums::RegDisposition::REG_CREATED_NEW_KEY {
+            return;
         }
+
+        if let Ok(auto_launch) = self.get_auto_launch() {
+            let _: Result<(), al::Error> = auto_launch.enable();
+        }
+
+        let _: Result<(), std::io::Error> = key.set_value("AutoUpdate", &(true as u32));
+    }
+
+    fn auto_update(&self) {
+        let Ok((key, _)) = self.get_reg_key() else {
+            return;
+        };
+
+        let Ok(auto_update) = key.get_value::<u32, &str>("AutoUpdate") else {
+            return;
+        };
+
+        if auto_update > 0 {
+            let _: Result<(), Box<su::errors::Error>> = self.update();
+        }
+    }
+
+    fn update(&self) -> Result<(), Box<su::errors::Error>> {
+        let status: su::Status = su::backends::github::Update::configure()
+            .repo_owner("jqntn")
+            .repo_name(APP_NAME)
+            .bin_name(APP_NAME)
+            .show_download_progress(true)
+            .current_version(su::cargo_crate_version!())
+            .build()?
+            .update()?;
+
+        println!("Update status: `{}`!", status.version());
+
+        Ok(())
     }
 
     fn exit(&self) {

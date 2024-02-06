@@ -1,4 +1,3 @@
 MVP:
 - installer should create shortcuts
-- uninstaller should delete reg and appdata
-- check for update
+- uninstaller should delete reg key
