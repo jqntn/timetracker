@@ -3,6 +3,7 @@ use crate::constants::*;
 use crate::shared::*;
 use nwg::NativeUi;
 use winapi::um::winuser::SetForegroundWindow;
+use winreg::enums::*;
 
 #[derive(Default, nwd::NwgUi)]
 pub struct SystemTray {
@@ -22,12 +23,19 @@ pub struct SystemTray {
     #[nwg_control(parent: window, popup: true)]
     tray_menu: nwg::Menu,
 
-    #[nwg_control(parent: tray_menu, text: &format!("Show {}", APP_NAME))]
+    #[nwg_control(parent: tray_menu, text: "Show records")]
     #[nwg_events(OnMenuItemSelected: [SystemTray::show_window])]
     tray_item_open: nwg::MenuItem,
 
     #[nwg_control(parent: tray_menu)]
-    separator: nwg::MenuSeparator,
+    separator0: nwg::MenuSeparator,
+
+    #[nwg_control(parent: tray_menu, text: "Run at startup")]
+    #[nwg_events(OnMenuItemSelected: [SystemTray::toggle_startup])]
+    tray_item_startup: nwg::MenuItem,
+
+    #[nwg_control(parent: tray_menu)]
+    separator1: nwg::MenuSeparator,
 
     #[nwg_control(parent: tray_menu, text: "Exit")]
     #[nwg_events(OnMenuItemSelected: [SystemTray::exit])]
@@ -39,18 +47,22 @@ impl SystemTray {
         let system_tray: system_tray_ui::SystemTrayUi =
             SystemTray::build_ui(SystemTray::default()).expect("Failed to build UI");
 
+        system_tray.enable_startup_first_time();
+
         nwg::dispatch_thread_events();
 
         system_tray
     }
 
     fn show_menu(&self) {
+        self.refresh_startup();
+
         let (x, y): (i32, i32) = nwg::GlobalCursor::position();
         self.tray_menu.popup(x, y);
     }
 
     fn show_window(&self) {
-        if self.try_set_foreground_window() {
+        if self.set_foreground_window() {
             return;
         }
 
@@ -58,17 +70,63 @@ impl SystemTray {
 
         unsafe { *WINDOW_HANDLE.lock().unwrap() = Some(basic_app.window().handle.hwnd().unwrap()) };
 
-        self.try_set_foreground_window();
+        self.set_foreground_window();
 
         nwg::dispatch_thread_events();
     }
 
-    fn try_set_foreground_window(&self) -> bool {
+    fn toggle_startup(&self) {
+        let Ok(auto_launch) = self.get_auto_launch() else {
+            return;
+        };
+
+        if !self.tray_item_startup.checked() {
+            let _: Result<(), al::Error> = auto_launch.enable();
+        } else {
+            let _: Result<(), al::Error> = auto_launch.disable();
+        }
+    }
+
+    fn refresh_startup(&self) {
+        let Ok(auto_launch) = self.get_auto_launch() else {
+            return;
+        };
+
+        if let Ok(is_enabled) = auto_launch.is_enabled() {
+            self.tray_item_startup.set_checked(is_enabled);
+        }
+    }
+
+    fn get_auto_launch(&self) -> Result<al::AutoLaunch, ()> {
+        let Ok(exe_path) = std::env::current_exe() else {
+            return Err(());
+        };
+
+        Ok(al::AutoLaunchBuilder::new()
+            .set_app_name(APP_NAME)
+            .set_app_path(exe_path.to_str().unwrap())
+            .build()
+            .unwrap())
+    }
+
+    fn set_foreground_window(&self) -> bool {
         if let Some(hwnd) = unsafe { *WINDOW_HANDLE.lock().unwrap() } {
             unsafe { SetForegroundWindow(hwnd) };
             return true;
         }
         false
+    }
+
+    fn enable_startup_first_time(&self) {
+        if let Ok((_, disp)) = winreg::RegKey::predef(HKEY_CURRENT_USER)
+            .create_subkey(std::path::Path::new(APP_NAME).join("FirstTime"))
+        {
+            if disp == REG_CREATED_NEW_KEY {
+                if let Ok(auto_launch) = self.get_auto_launch() {
+                    let _: Result<(), al::Error> = auto_launch.enable();
+                }
+            }
+        }
     }
 
     fn exit(&self) {

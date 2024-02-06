@@ -1,9 +1,11 @@
 #![windows_subsystem = "windows"]
 
+extern crate auto_launch as al;
 extern crate native_windows_derive as nwd;
 extern crate native_windows_gui as nwg;
 extern crate single_instance as si;
 extern crate winapi;
+extern crate winreg;
 
 mod basic_app;
 mod constants;
