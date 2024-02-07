@@ -98,6 +98,8 @@ impl SystemTray {
 
         let _: Result<(), std::io::Error> =
             key.set_value("AutoUpdate", &(!self.tray_item_update.checked() as u32));
+
+        self.auto_update();
     }
 
     fn refresh_startup(&self) {
