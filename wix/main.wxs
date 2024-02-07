@@ -114,27 +114,49 @@
                         <RemoveRegistryKey Action='removeOnUninstall' Root='HKCU' Key='SOFTWARE\timetracker'/>
                     </Component>
 
-                    <Directory Id='Bin' Name='bin'>
-                        <Component Id='Path' Guid='82420274-3F93-481C-B7AB-B183FA454F9E' KeyPath='yes'>
-                            <Environment
-                                Id='PATH'
-                                Name='PATH'
-                                Value='[Bin]'
-                                Permanent='no'
-                                Part='last'
-                                Action='set'
-                                System='yes'/>
-                        </Component>
-                        <Component Id='binary0' Guid='*'>
-                            <File
-                                Id='exe0'
-                                Name='timetracker.exe'
-                                DiskId='1'
-                                Source='$(var.CargoTargetBinDir)\timetracker.exe'
-                                KeyPath='yes'/>
-                        </Component>
-                    </Directory>
+                    <Component Id='Path' Guid='82420274-3F93-481C-B7AB-B183FA454F9E' KeyPath='yes'>
+                        <Environment
+                            Id='PATH'
+                            Name='PATH'
+                            Value='[APPLICATIONFOLDER]'
+                            Permanent='no'
+                            Part='last'
+                            Action='set'
+                            System='yes'/>
+                    </Component>
+                    <Component Id='binary0' Guid='*'>
+                        <File
+                            Id='exe0'
+                            Name='timetracker.exe'
+                            DiskId='1'
+                            Source='$(var.CargoTargetBinDir)\timetracker.exe'
+                            KeyPath='yes'/>
+                    </Component>
                 </Directory>
+            </Directory>
+
+            <Directory Id='ProgramMenuFolder'>
+                <Component Id='StartMenuComponent' Guid='02420274-3F93-481C-B7AB-B183FA454F9E'>
+                    <Shortcut
+                        Id='StartMenuShortcut'
+                        Name='timetracker'
+                        Target='[APPLICATIONFOLDER]\timetracker.exe'
+                        WorkingDirectory='APPLICATIONFOLDER'/>
+                    <RemoveFile Id='RemoveStartMenuShortcut' Name='timetracker.lnk' On='uninstall'/>
+                    <RegistryValue KeyPath='yes' Root='HKCU' Key='SOFTWARE\timetracker' Name='FirstTimeUse' Value='1' Type='integer'/>
+                </Component>
+            </Directory>
+
+            <Directory Id='DesktopFolder'>
+                <Component Id='DesktopComponent' Guid='12420274-3F93-481C-B7AB-B183FA454F9E'>
+                    <Shortcut
+                        Id='DesktopShortcut'
+                        Name='timetracker'
+                        Target='[APPLICATIONFOLDER]\timetracker.exe'
+                        WorkingDirectory='APPLICATIONFOLDER'/>
+                    <RemoveFile Id='RemoveDesktopShortcut' Name='timetracker.lnk' On='uninstall'/>
+                    <RegistryValue KeyPath='yes' Root='HKCU' Key='SOFTWARE\timetracker' Name='FirstTimeUse' Value='1' Type='integer'/>
+                </Component>
             </Directory>
         </Directory>
 
@@ -165,6 +187,24 @@
                 Level='1'
                 Absent='allow'>
                 <ComponentRef Id='Path'/>
+            </Feature>
+
+            <Feature
+                Id='StartMenuFeature'
+                Title='Start Menu Shortcut'
+                Description='Add a shortcut to the Start Menu.'
+                Level='1'
+                Absent='allow'>
+                <ComponentRef Id='StartMenuComponent'/>
+            </Feature>
+
+            <Feature
+                Id='DesktopFeature'
+                Title='Desktop Shortcut'
+                Description='Add a shortcut to the Desktop.'
+                Level='1'
+                Absent='allow'>
+                <ComponentRef Id='DesktopComponent'/>
             </Feature>
         </Feature>
 
