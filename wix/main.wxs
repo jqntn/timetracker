@@ -56,11 +56,13 @@
     <?define PlatformProgramFilesFolder = "ProgramFilesFolder" ?>
 <?endif ?>
 
+<?define AppName = "timetracker" ?>
+
 <Wix xmlns='http://schemas.microsoft.com/wix/2006/wi'>
 
     <Product
         Id='*'
-        Name='timetracker'
+        Name='$(var.AppName)'
         UpgradeCode='132B9257-C95C-48A2-A0A9-521A8677A8D2'
         Manufacturer='jqntn'
         Language='1033'
@@ -82,11 +84,11 @@
             DowngradeErrorMessage='A newer version of [ProductName] is already installed. Setup will now exit.'/>
 
         <Media Id='1' Cabinet='media1.cab' EmbedCab='yes' DiskPrompt='CD-ROM #1'/>
-        <Property Id='DiskPrompt' Value='timetracker Installation'/>
+        <Property Id='DiskPrompt' Value='$(var.AppName) Installation'/>
 
         <Directory Id='TARGETDIR' Name='SourceDir'>
             <Directory Id='$(var.PlatformProgramFilesFolder)' Name='PFiles'>
-                <Directory Id='APPLICATIONFOLDER' Name='timetracker'>
+                <Directory Id='APPLICATIONFOLDER' Name='$(var.AppName)'>
                     
                     <!--
                       Enabling the license sidecar file in the installer is a four step process:
@@ -109,9 +111,9 @@
                     -->
 
                     <Component Id='RegKey' Guid='*'>
-                        <RegistryValue KeyPath='yes' Root='HKCU' Key='SOFTWARE\timetracker' Name='FirstTimeUse' Value='1' Type='integer'/>
-                        <RemoveRegistryKey Action='removeOnInstall' Root='HKCU' Key='SOFTWARE\timetracker'/>
-                        <RemoveRegistryKey Action='removeOnUninstall' Root='HKCU' Key='SOFTWARE\timetracker'/>
+                        <RegistryValue KeyPath='yes' Root='HKCU' Key='SOFTWARE\$(var.AppName)' Name='FirstTimeUse' Value='1' Type='integer'/>
+                        <RemoveRegistryKey Action='removeOnInstall' Root='HKCU' Key='SOFTWARE\$(var.AppName)'/>
+                        <RemoveRegistryKey Action='removeOnUninstall' Root='HKCU' Key='SOFTWARE\$(var.AppName)'/>
                     </Component>
 
                     <Component Id='Path' Guid='82420274-3F93-481C-B7AB-B183FA454F9E' KeyPath='yes'>
@@ -127,9 +129,9 @@
                     <Component Id='binary0' Guid='*'>
                         <File
                             Id='exe0'
-                            Name='timetracker.exe'
+                            Name='$(var.AppName).exe'
                             DiskId='1'
-                            Source='$(var.CargoTargetBinDir)\timetracker.exe'
+                            Source='$(var.CargoTargetBinDir)\$(var.AppName).exe'
                             KeyPath='yes'/>
                     </Component>
                 </Directory>
@@ -139,11 +141,11 @@
                 <Component Id='StartMenuComponent' Guid='02420274-3F93-481C-B7AB-B183FA454F9E'>
                     <Shortcut
                         Id='StartMenuShortcut'
-                        Name='timetracker'
-                        Target='[APPLICATIONFOLDER]\timetracker.exe'
+                        Name='$(var.AppName)'
+                        Target='[APPLICATIONFOLDER]\$(var.AppName).exe'
                         WorkingDirectory='APPLICATIONFOLDER'/>
-                    <RemoveFile Id='RemoveStartMenuShortcut' Name='timetracker.lnk' On='uninstall'/>
-                    <RegistryValue KeyPath='yes' Root='HKCU' Key='SOFTWARE\timetracker' Name='FirstTimeUse' Value='1' Type='integer'/>
+                    <RemoveFile Id='RemoveStartMenuShortcut' Name='$(var.AppName).lnk' On='uninstall'/>
+                    <RegistryValue KeyPath='yes' Root='HKCU' Key='SOFTWARE\$(var.AppName)' Name='FirstTimeUse' Value='1' Type='integer'/>
                 </Component>
             </Directory>
 
@@ -151,11 +153,11 @@
                 <Component Id='DesktopComponent' Guid='12420274-3F93-481C-B7AB-B183FA454F9E'>
                     <Shortcut
                         Id='DesktopShortcut'
-                        Name='timetracker'
-                        Target='[APPLICATIONFOLDER]\timetracker.exe'
+                        Name='$(var.AppName)'
+                        Target='[APPLICATIONFOLDER]\$(var.AppName).exe'
                         WorkingDirectory='APPLICATIONFOLDER'/>
-                    <RemoveFile Id='RemoveDesktopShortcut' Name='timetracker.lnk' On='uninstall'/>
-                    <RegistryValue KeyPath='yes' Root='HKCU' Key='SOFTWARE\timetracker' Name='FirstTimeUse' Value='1' Type='integer'/>
+                    <RemoveFile Id='RemoveDesktopShortcut' Name='$(var.AppName).lnk' On='uninstall'/>
+                    <RegistryValue KeyPath='yes' Root='HKCU' Key='SOFTWARE\$(var.AppName)' Name='FirstTimeUse' Value='1' Type='integer'/>
                 </Component>
             </Directory>
         </Directory>
@@ -217,7 +219,7 @@
           The product icon is the graphic that appears in the Add/Remove
           Programs control panel for the application.
         -->
-        <Icon Id='ProductICO' SourceFile='res/icon/timetracker-96.ico'/>
+        <Icon Id='ProductICO' SourceFile='res/icon/$(var.AppName)-96.ico'/>
         <Property Id='ARPPRODUCTICON' Value='ProductICO'/>
 
         
