@@ -49,8 +49,8 @@ impl SystemTray {
         let system_tray: system_tray_ui::SystemTrayUi =
             SystemTray::build_ui(SystemTray::default()).expect("Failed to build UI");
 
-        system_tray.first_time_init();
-        system_tray.auto_update();
+        Self::first_time_init();
+        Self::auto_update();
 
         nwg::dispatch_thread_events();
 
@@ -66,7 +66,7 @@ impl SystemTray {
     }
 
     fn show_window(&self) {
-        if self.set_foreground_window() {
+        if Self::set_foreground_window() {
             return;
         }
 
@@ -74,13 +74,13 @@ impl SystemTray {
 
         unsafe { *WINDOW_HANDLE.lock().unwrap() = Some(basic_app.window().handle.hwnd().unwrap()) };
 
-        self.set_foreground_window();
+        Self::set_foreground_window();
 
         nwg::dispatch_thread_events();
     }
 
     fn toggle_startup(&self) {
-        let Ok(auto_launch) = self.get_auto_launch() else {
+        let Ok(auto_launch) = Self::get_auto_launch() else {
             return;
         };
 
@@ -92,18 +92,18 @@ impl SystemTray {
     }
 
     fn toggle_update(&self) {
-        let Ok((key, _)) = self.get_reg_key() else {
+        let Ok((key, _)) = Self::get_reg_key() else {
             return;
         };
 
         let _: Result<(), std::io::Error> =
             key.set_value("AutoUpdate", &(!self.tray_item_update.checked() as u32));
 
-        self.auto_update();
+        Self::auto_update();
     }
 
     fn refresh_startup(&self) {
-        let Ok(auto_launch) = self.get_auto_launch() else {
+        let Ok(auto_launch) = Self::get_auto_launch() else {
             return;
         };
 
@@ -113,7 +113,7 @@ impl SystemTray {
     }
 
     fn refresh_update(&self) {
-        let Ok((key, _)) = self.get_reg_key() else {
+        let Ok((key, _)) = Self::get_reg_key() else {
             return;
         };
 
@@ -122,7 +122,7 @@ impl SystemTray {
         }
     }
 
-    fn get_auto_launch(&self) -> Result<al::AutoLaunch, ()> {
+    fn get_auto_launch() -> Result<al::AutoLaunch, ()> {
         let Ok(exe_path) = std::env::current_exe() else {
             return Err(());
         };
@@ -134,14 +134,12 @@ impl SystemTray {
             .unwrap())
     }
 
-    fn get_reg_key(
-        &self,
-    ) -> Result<(winreg::RegKey, winreg::enums::RegDisposition), std::io::Error> {
+    fn get_reg_key() -> Result<(winreg::RegKey, winreg::enums::RegDisposition), std::io::Error> {
         winreg::RegKey::predef(winreg::enums::HKEY_CURRENT_USER)
             .create_subkey(std::path::Path::new("SOFTWARE").join(APP_NAME))
     }
 
-    fn set_foreground_window(&self) -> bool {
+    fn set_foreground_window() -> bool {
         if let Some(hwnd) = unsafe { *WINDOW_HANDLE.lock().unwrap() } {
             unsafe { winapi::um::winuser::SetForegroundWindow(hwnd) };
             return true;
@@ -149,8 +147,8 @@ impl SystemTray {
         false
     }
 
-    fn first_time_init(&self) {
-        let Ok((key, _)) = self.get_reg_key() else {
+    fn first_time_init() {
+        let Ok((key, _)) = Self::get_reg_key() else {
             return;
         };
 
@@ -172,15 +170,15 @@ impl SystemTray {
             return;
         }
 
-        if let Ok(auto_launch) = self.get_auto_launch() {
+        if let Ok(auto_launch) = Self::get_auto_launch() {
             let _: Result<(), al::Error> = auto_launch.enable();
         }
 
         let _: Result<(), std::io::Error> = key.set_value("AutoUpdate", &(true as u32));
     }
 
-    fn auto_update(&self) {
-        let Ok((key, _)) = self.get_reg_key() else {
+    fn auto_update() {
+        let Ok((key, _)) = Self::get_reg_key() else {
             return;
         };
 
@@ -189,22 +187,21 @@ impl SystemTray {
         };
 
         if auto_update > 0 {
-            let _: Result<(), Box<su::errors::Error>> = self.update();
+            let _: Result<(), Box<su::errors::Error>> = Self::update();
         }
     }
 
-    fn update(&self) -> Result<(), Box<su::errors::Error>> {
-        let status: su::Status = su::backends::github::Update::configure()
+    fn update() -> Result<(), Box<su::errors::Error>> {
+        su::backends::github::Update::configure()
             .repo_owner("jqntn")
             .repo_name(APP_NAME)
             .bin_name(APP_NAME)
-            .show_download_progress(true)
+            .target("zip")
             .current_version(su::cargo_crate_version!())
+            .show_download_progress(true)
+            .no_confirm(true)
             .build()?
             .update()?;
-
-        println!("Update status: `{}`!", status.version());
-
         Ok(())
     }
 

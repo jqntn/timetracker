@@ -1,4 +1,4 @@
-// #![windows_subsystem = "windows"]
+#![windows_subsystem = "windows"]
 
 extern crate auto_launch as al;
 extern crate native_windows_derive as nwd;
