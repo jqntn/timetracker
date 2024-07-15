@@ -1,9 +1,11 @@
 [package]
-name = "timetracker"
+name = "timetracker-win"
 version = "0.0.1"
 edition = "2021"
-authors = ["jqntn <jqntn@outlook.fr>"]
 build = "build.rs"
+authors = ["jqntn <jqntn@outlook.fr>"]
+description = "eight"
+license = "MIT"
 
 [profile.release]
 lto = true
